@@ -1,0 +1,23 @@
+apiVersion: trafficflow.skoala.daocloud.io/v1alpha1
+kind: Sentinel
+metadata:
+  name: nacos-test-sentinel
+  namespace: skoala-jia
+spec:
+  replicas: 1
+  image: "release.daocloud.io/skoala/sentinel:v0.3.4"
+  type: "NodePort"
+  ports:
+  - port: 8080
+  env:
+  - name: ""
+    value: ""
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 1
+      memory: 1Gi
+
+

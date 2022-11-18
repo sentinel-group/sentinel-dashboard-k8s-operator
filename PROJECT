@@ -1,0 +1,16 @@
+domain: skoala.daocloud.io
+layout:
+- go.kubebuilder.io/v3
+projectName: sentinel-operator
+repo: skoala.daocloud.io/sentinel-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: skoala.daocloud.io
+  group: trafficflow
+  kind: Sentinel
+  path: skoala.daocloud.io/sentinel-operator/api/v1alpha1
+  version: v1alpha1
+version: "3"
