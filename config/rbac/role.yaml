@@ -30,7 +30,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - trafficflow.skoala.daocloud.io
+  - sentinelguard.io
   resources:
   - sentinels
   verbs:
@@ -42,13 +42,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - trafficflow.skoala.daocloud.io
+  - sentinelguard.io
   resources:
   - sentinels/finalizers
   verbs:
   - update
 - apiGroups:
-  - trafficflow.skoala.daocloud.io
+  - sentinelguard.io
   resources:
   - sentinels/status
   verbs:

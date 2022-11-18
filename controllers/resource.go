@@ -7,25 +7,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	corev1 "k8s.io/api/core/v1"
-	trafficflowv1alpha1 "skoala.daocloud.io/sentinel-operator/api/v1alpha1"
+	trafficflowv1alpha1 "sentinelguard.io/sentinel-operator/api/v1alpha1"
 )
 
 func MutateService(sentinel *trafficflowv1alpha1.Sentinel, svc *corev1.Service) {
 	svc.Labels = map[string]string{
 		"app": sentinel.Name,
-		// 监控使用
-		"skoala.io/type": "sentinel",
 	}
 
 	ports := []corev1.ServicePort{
 		{
 			Name:     "http",
 			Port:     sentinel.Spec.Ports[0].Port,
-			Protocol: "TCP",
-		},
-		{
-			Name:     "jmx-metrics",
-			Port:     12345,
 			Protocol: "TCP",
 		},
 	}
@@ -36,11 +29,6 @@ func MutateService(sentinel *trafficflowv1alpha1.Sentinel, svc *corev1.Service) 
 				Port:     sentinel.Spec.Ports[0].Port,
 				Protocol: "TCP",
 				NodePort: sentinel.Spec.Ports[0].NodePort,
-			},
-			{
-				Name:     "jmx-metrics",
-				Port:     12345,
-				Protocol: "TCP",
 			},
 		}
 	}

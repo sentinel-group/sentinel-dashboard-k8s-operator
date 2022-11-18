@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	trafficflowv1alpha1 "skoala.daocloud.io/sentinel-operator/api/v1alpha1"
+	trafficflowv1alpha1 "sentinelguard.io/sentinel-operator/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 

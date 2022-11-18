@@ -5,9 +5,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.9.2
   creationTimestamp: null
-  name: sentinels.trafficflow.skoala.daocloud.io
+  name: sentinels.sentinelguard.io
 spec:
-  group: trafficflow.skoala.daocloud.io
+  group: sentinelguard.io
   names:
     kind: Sentinel
     listKind: SentinelList

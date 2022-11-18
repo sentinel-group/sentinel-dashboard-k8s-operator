@@ -1,11 +1,11 @@
-apiVersion: trafficflow.skoala.daocloud.io/v1alpha1
+apiVersion: sentinelguard.io/v1alpha1
 kind: Sentinel
 metadata:
-  name: nacos-test-sentinel
-  namespace: skoala-jia
+  name: sentinel-dashboard
+  namespace: sentinel-group
 spec:
   replicas: 1
-  image: "release.daocloud.io/skoala/sentinel:v0.3.4"
+  image: "xxx:v0.1.0"
   type: "NodePort"
   ports:
   - port: 8080

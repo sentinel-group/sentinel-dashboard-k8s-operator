@@ -29,7 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	trafficflowv1alpha1 "skoala.daocloud.io/sentinel-operator/api/v1alpha1"
+	trafficflowv1alpha1 "sentinelguard.io/sentinel-operator/api/v1alpha1"
 )
 
 // SentinelReconciler reconciles a Sentinel object
@@ -38,9 +38,9 @@ type SentinelReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=trafficflow.skoala.daocloud.io,resources=sentinels,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=trafficflow.skoala.daocloud.io,resources=sentinels/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=trafficflow.skoala.daocloud.io,resources=sentinels/finalizers,verbs=update
+//+kubebuilder:rbac:groups=sentinelguard.io,resources=sentinels,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=sentinelguard.io,resources=sentinels/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=sentinelguard.io,resources=sentinels/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=service,verbs=get;list;watch;create;update;patch;delete
 

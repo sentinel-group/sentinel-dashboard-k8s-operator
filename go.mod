@@ -1,4 +1,4 @@
-module skoala.daocloud.io/sentinel-operator
+module sentinelguard.io/sentinel-operator
 
 go 1.19
 
