@@ -29,36 +29,36 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	trafficflowv1alpha1 "sentinelguard.io/sentinel-operator/api/v1alpha1"
+	sentinelv1alpha1 "github.com/sentinel-group/sentinel-dashboard-k8s-operator/api/v1alpha1"
 )
 
-// SentinelReconciler reconciles a Sentinel object
-type SentinelReconciler struct {
+// DashboardReconciler reconciles a Dashboard object
+type DashboardReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=sentinelguard.io,resources=sentinels,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=sentinelguard.io,resources=sentinels/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=sentinelguard.io,resources=sentinels/finalizers,verbs=update
+//+kubebuilder:rbac:groups=sentinel.sentinelguard.io,resources=dashboards,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=sentinel.sentinelguard.io,resources=dashboards/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=sentinel.sentinelguard.io,resources=dashboards/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=service,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the Sentinel object against the actual cluster state, and then
+// the Dashboard object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.0/pkg/reconcile
-func (r *SentinelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *DashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	logger.Info("start reconcile")
 
-	var sentinel trafficflowv1alpha1.Sentinel
-	if err := r.Get(ctx, req.NamespacedName, &sentinel); err != nil {
+	var instance sentinelv1alpha1.Dashboard
+	if err := r.Get(ctx, req.NamespacedName, &instance); err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("sentinel instance not found, ignoring since object must be deleted")
 			return ctrl.Result{}, nil
@@ -66,15 +66,15 @@ func (r *SentinelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		logger.Error(err, "failed to get sentinel instance")
 		return ctrl.Result{}, err
 	}
-	logger.Info("sentinel instance: " + sentinel.String())
+	logger.Info("sentinel instance: " + instance.String())
 
 	var deploy appsv1.Deployment
-	deploy.Name = sentinel.Name
-	deploy.Namespace = sentinel.Namespace
+	deploy.Name = instance.Name
+	deploy.Namespace = instance.Namespace
 	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		result, err := controllerutil.CreateOrUpdate(ctx, r.Client, &deploy, func() error {
-			MutateDeployment(&sentinel, &deploy)
-			return controllerutil.SetControllerReference(&sentinel, &deploy, r.Scheme)
+			MutateDeployment(&instance, &deploy)
+			return controllerutil.SetControllerReference(&instance, &deploy, r.Scheme)
 		})
 		logger.Info("updated deployment", "result", result, "deployment name", deploy.Name, "deployment namespace", deploy.Namespace)
 		return err
@@ -84,12 +84,12 @@ func (r *SentinelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	var svc corev1.Service
-	svc.Name = sentinel.Name
-	svc.Namespace = sentinel.Namespace
+	svc.Name = instance.Name
+	svc.Namespace = instance.Namespace
 	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		result, err := ctrl.CreateOrUpdate(ctx, r.Client, &svc, func() error {
-			MutateService(&sentinel, &svc)
-			return controllerutil.SetControllerReference(&sentinel, &svc, r.Scheme)
+			MutateService(&instance, &svc)
+			return controllerutil.SetControllerReference(&instance, &svc, r.Scheme)
 		})
 		logger.Info("updated service", "result", result, "service name", svc.Name, "deployment namespace", svc.Namespace)
 		return err
@@ -99,7 +99,7 @@ func (r *SentinelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		if err := r.Get(ctx, req.NamespacedName, &sentinel); err != nil {
+		if err := r.Get(ctx, req.NamespacedName, &instance); err != nil {
 			if apierrors.IsNotFound(err) {
 				logger.Info("sentinel instance not found, ignoring since object must be deleted")
 				return nil
@@ -108,19 +108,19 @@ func (r *SentinelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			return err
 		}
 
-		sentinel.Status.Phase = trafficflowv1alpha1.PhaseWaiting
+		instance.Status.Phase = sentinelv1alpha1.PhaseWaiting
 		if len(deploy.Status.Conditions) > 0 {
-			if deploy.Status.Conditions[0].Status == corev1.ConditionTrue && deploy.Status.ReadyReplicas == *sentinel.Spec.Replicas {
-				sentinel.Status.Phase = trafficflowv1alpha1.PhaseRunning
+			if deploy.Status.Conditions[0].Status == corev1.ConditionTrue && deploy.Status.ReadyReplicas == *instance.Spec.Replicas {
+				instance.Status.Phase = sentinelv1alpha1.PhaseRunning
 			} else if deploy.Status.Conditions[0].Status == corev1.ConditionFalse {
-				sentinel.Status.Phase = trafficflowv1alpha1.PhaseNotReady
+				instance.Status.Phase = sentinelv1alpha1.PhaseNotReady
 			}
 		}
-		errStatus := r.Status().Update(ctx, &sentinel)
+		errStatus := r.Status().Update(ctx, &instance)
 		logger.Info("updated sentinel status", "service name", svc.Name, "deployment namespace", svc.Namespace)
 		return errStatus
 	}); err != nil {
-		logger.Error(err, "failed updated sentinel status", "sentinel name", sentinel.Name, "sentinel namespace", sentinel.Namespace)
+		logger.Error(err, "failed updated sentinel status", "sentinel name", instance.Name, "sentinel namespace", instance.Namespace)
 		return ctrl.Result{}, err
 	}
 
@@ -129,9 +129,9 @@ func (r *SentinelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *SentinelReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *DashboardReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&trafficflowv1alpha1.Sentinel{}).
+		For(&sentinelv1alpha1.Dashboard{}).
 		Owns(&corev1.Service{}).
 		Owns(&appsv1.Deployment{}).
 		Complete(r)

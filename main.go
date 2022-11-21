@@ -20,8 +20,6 @@ import (
 	"flag"
 	"os"
 
-	"go.uber.org/zap/zapcore"
-
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -33,8 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	trafficflowv1alpha1 "sentinelguard.io/sentinel-operator/api/v1alpha1"
-	"sentinelguard.io/sentinel-operator/controllers"
+	sentinelv1alpha1 "github.com/sentinel-group/sentinel-dashboard-k8s-operator/api/v1alpha1"
+	"github.com/sentinel-group/sentinel-dashboard-k8s-operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -46,7 +44,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(trafficflowv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(sentinelv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -55,13 +53,12 @@ func main() {
 	var enableLeaderElection bool
 	var probeAddr string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8082", "The address the probe endpoint binds to.")
+	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	opts := zap.Options{
 		Development: true,
-		TimeEncoder: zapcore.ISO8601TimeEncoder,
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -74,7 +71,7 @@ func main() {
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "bf7b371b.sentinelguard.io",
+		LeaderElectionID:       "e02f2ea4.sentinelguard.io",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
@@ -92,11 +89,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.SentinelReconciler{
+	if err = (&controllers.DashboardReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Sentinel")
+		setupLog.Error(err, "unable to create controller", "controller", "Dashboard")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

@@ -1,4 +1,4 @@
-module sentinelguard.io/sentinel-operator
+module github.com/sentinel-group/sentinel-dashboard-k8s-operator
 
 go 1.19
 

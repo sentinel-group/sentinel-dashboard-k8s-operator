@@ -26,8 +26,8 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// SentinelSpec defines the desired state of Sentinel
-type SentinelSpec struct {
+// DashboardSpec defines the desired state of Dashboard
+type DashboardSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
@@ -83,8 +83,8 @@ type SentinelSpec struct {
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 }
 
-// SentinelStatus defines the observed state of Sentinel
-type SentinelStatus struct {
+// DashboardStatus defines the observed state of Dashboard
+type DashboardStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
@@ -101,31 +101,31 @@ const (
 	PhaseNotReady Phase = "NotReady"
 )
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
-// Sentinel is the Schema for the sentinels API
-type Sentinel struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   SentinelSpec   `json:"spec,omitempty"`
-	Status SentinelStatus `json:"status,omitempty"`
-}
-
-func (s *Sentinel) String() string {
+func (s *Dashboard) String() string {
 	return fmt.Sprintf("image: %s, phase: %s, env: %s", s.Spec.Image, s.Status.Phase, s.Spec.Env)
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
 
-// SentinelList contains a list of Sentinel
-type SentinelList struct {
+// Dashboard is the Schema for the dashboards API
+type Dashboard struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   DashboardSpec   `json:"spec,omitempty"`
+	Status DashboardStatus `json:"status,omitempty"`
+}
+
+//+kubebuilder:object:root=true
+
+// DashboardList contains a list of Dashboard
+type DashboardList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Sentinel `json:"items"`
+	Items           []Dashboard `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Sentinel{}, &SentinelList{})
+	SchemeBuilder.Register(&Dashboard{}, &DashboardList{})
 }

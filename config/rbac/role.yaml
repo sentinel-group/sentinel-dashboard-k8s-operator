@@ -6,9 +6,9 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - ""
+  - sentinel.sentinelguard.io
   resources:
-  - service
+  - dashboards
   verbs:
   - create
   - delete
@@ -18,39 +18,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - apps
+  - sentinel.sentinelguard.io
   resources:
-  - deployments
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - sentinelguard.io
-  resources:
-  - sentinels
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - sentinelguard.io
-  resources:
-  - sentinels/finalizers
+  - dashboards/finalizers
   verbs:
   - update
 - apiGroups:
-  - sentinelguard.io
+  - sentinel.sentinelguard.io
   resources:
-  - sentinels/status
+  - dashboards/status
   verbs:
   - get
   - patch
