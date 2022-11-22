@@ -2,14 +2,13 @@ apiVersion: sentinel.sentinelguard.io/v1alpha1
 kind: Dashboard
 metadata:
   name: sentinel-dashboard
-  namespace: sentinel-group
+  namespace: skoala-jia
 spec:
   replicas: 1
-  image: "sentinel-group/sentinel-dashboard:v0.1.0"
+  image: "release-ci.daocloud.io/skoala/sentinel:v0.3.4-1-g9d1a660"
   type: "NodePort"
   ports:
     - port: 8080
-      nodePort: 30000
   env:
     - name: "NACOS_ADDRESS"
       value: "nacos.nacos-group:8848"

@@ -90,6 +90,8 @@ type DashboardStatus struct {
 
 	// +optional
 	Phase Phase `json:"phase,omitempty"`
+
+	Conditions []DashboardCondition `json:"conditions,omitempty"`
 }
 
 type Phase string
@@ -100,6 +102,46 @@ const (
 	PhaseDeleting Phase = "Deleting"
 	PhaseNotReady Phase = "NotReady"
 )
+
+type DashboardConditionType string
+
+const (
+	AppliedConditionType DashboardConditionType = "Applied"
+	ReadyConditionType   DashboardConditionType = "Ready"
+)
+
+type DashboardCondition struct {
+	// type of condition in CamelCase or in foo.example.com/CamelCase.
+	// ---
+	// Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+	// useful (see .node.status.conditions), the ability to deconflict is important.
+	// The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+	// +optional
+	Type string `json:"type" protobuf:"bytes,1,opt,name=type"`
+	// status of the condition, one of True, False, Unknown.
+	// +optional
+	Status metav1.ConditionStatus `json:"status" protobuf:"bytes,2,opt,name=status"`
+	// observedGeneration represents the .metadata.generation that the condition was set based upon.
+	// For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+	// with respect to the current state of the instance.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty" protobuf:"varint,3,opt,name=observedGeneration"`
+	// lastTransitionTime is the last time the condition transitioned from one status to another.
+	// This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime" protobuf:"bytes,4,opt,name=lastTransitionTime"`
+	// reason contains a programmatic identifier indicating the reason for the condition's last transition.
+	// Producers of specific condition types may define expected values and meanings for this field,
+	// and whether the values are considered a guaranteed API.
+	// The value should be a CamelCase string.
+	// This field may not be empty.
+	// +optional
+	Reason string `json:"reason" protobuf:"bytes,5,opt,name=reason"`
+	// message is a human readable message indicating details about the transition.
+	// This may be an empty string.
+	// +optional
+	Message string `json:"message" protobuf:"bytes,6,opt,name=message"`
+}
 
 func (s *Dashboard) String() string {
 	return fmt.Sprintf("image: %s, phase: %s, env: %s", s.Spec.Image, s.Status.Phase, s.Spec.Env)
