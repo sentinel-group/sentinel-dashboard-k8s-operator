@@ -26,6 +26,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,7 +39,8 @@ import (
 // DashboardReconciler reconciles a Dashboard object
 type DashboardReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme     *runtime.Scheme
+	RestConfig *rest.Config
 }
 
 //+kubebuilder:rbac:groups=sentinel.sentinelguard.io,resources=dashboards,verbs=get;list;watch;create;update;patch;delete
@@ -149,28 +151,16 @@ func (r *DashboardReconciler) UpdateAppliedStatus(ctx context.Context, instance 
 
 func (r *DashboardReconciler) UpdateReadyStatus(ctx context.Context, instance *sentinelv1alpha1.Dashboard) error {
 	logger := log.FromContext(ctx)
-	health, err := r.GetHealth(ctx, instance)
-
-	if err != nil {
-		err = r.UpdateCondition(ctx, instance, sentinelv1alpha1.ReadyConditionType, metav1.ConditionFalse, errors.Cause(err).Error(), err.Error())
-		if err != nil {
+	if err := r.GetHealth(ctx, instance); err != nil {
+		if err = r.UpdateCondition(ctx, instance, sentinelv1alpha1.ReadyConditionType, metav1.ConditionFalse, errors.Cause(err).Error(), err.Error()); err != nil {
 			return errors.Wrapf(err, "failed updating conditions")
 		}
-	} else {
-		if health {
-			err := r.UpdateCondition(ctx, instance, sentinelv1alpha1.ReadyConditionType, metav1.ConditionTrue)
-			if err != nil {
-				return errors.Wrapf(err, "failed updating conditions")
-			}
-		} else {
-			logger.Info("not ready yet, trying again later")
-			// todo delaySeconds to enqueue
-			err := r.UpdateCondition(ctx, instance, sentinelv1alpha1.ReadyConditionType, metav1.ConditionFalse,
-				"deployment or service", "deployment or service failed")
-			if err != nil {
-				return errors.Wrapf(err, "failed updating conditions")
-			}
-		}
+		logger.Info("maybe not ready, trying again later")
+		return errors.Wrapf(err, "not health")
+	}
+
+	if err := r.UpdateCondition(ctx, instance, sentinelv1alpha1.ReadyConditionType, metav1.ConditionTrue); err != nil {
+		return errors.Wrapf(err, "failed updating conditions")
 	}
 
 	return nil
@@ -178,6 +168,8 @@ func (r *DashboardReconciler) UpdateReadyStatus(ctx context.Context, instance *s
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *DashboardReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.RestConfig = mgr.GetConfig()
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&sentinelv1alpha1.Dashboard{}).
 		Owns(&corev1.Service{}).
