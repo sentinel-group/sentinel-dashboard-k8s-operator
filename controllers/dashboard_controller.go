@@ -18,13 +18,13 @@ package controllers
 
 import (
 	"context"
+
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -69,18 +69,18 @@ func (r *DashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		logger.Error(err, "failed to get sentinel instance")
 		return ctrl.Result{}, err
 	}
-	logger.Info("sentinel instance: " + instance.String())
 
 	var g errgroup.Group
+	var err error
 	g.Go(func() error {
-		err := r.UpdateAppliedStatus(ctx, &instance)
-		return errors.Wrapf(err, "type=%s", sentinelv1alpha1.ReadyConditionType)
+		err = r.UpdateAppliedStatus(ctx, &instance)
+		return errors.Wrapf(err, "type=%s", sentinelv1alpha1.AppliedConditionType)
 	})
 	g.Go(func() error {
-		err := r.UpdateReadyStatus(ctx, &instance)
+		err = r.UpdateReadyStatus(ctx, &instance)
 		return errors.Wrapf(err, "type=%s", sentinelv1alpha1.ReadyConditionType)
 	})
-	err := g.Wait()
+	err = g.Wait()
 	if err != nil {
 		return ctrl.Result{}, errors.Wrap(err, "failed set status")
 	}
@@ -89,21 +89,14 @@ func (r *DashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	logger.Info("success reconcile")
+	logger.Info("end reconcile")
 	return ctrl.Result{}, nil
 }
 
 func (r *DashboardReconciler) UpdateAppliedStatus(ctx context.Context, instance *sentinelv1alpha1.Dashboard) error {
 	logger := log.FromContext(ctx)
 	switch r.GetCondition(ctx, instance, sentinelv1alpha1.AppliedConditionType).Status {
-	case metav1.ConditionTrue:
-		return nil
 	default:
-		err := r.UpdateCondition(ctx, instance, sentinelv1alpha1.AppliedConditionType, metav1.ConditionFalse)
-		if err != nil {
-			return errors.Wrapf(err, "failed updating applied status, value=%s", corev1.ConditionFalse)
-		}
-
 		var deploy appsv1.Deployment
 		deploy.Name = instance.Name
 		deploy.Namespace = instance.Namespace
@@ -112,10 +105,12 @@ func (r *DashboardReconciler) UpdateAppliedStatus(ctx context.Context, instance 
 				MutateDeployment(instance, &deploy)
 				return controllerutil.SetControllerReference(instance, &deploy, r.Scheme)
 			})
-			logger.Info("updated deployment", "result", result, "deployment name", deploy.Name, "deployment namespace", deploy.Namespace)
+			if err == nil {
+				logger.Info("succeed updated deployment", "result", result, "deployment name", deploy.Name, "deployment namespace", deploy.Namespace)
+			}
 			return err
 		}); err != nil {
-			condErr := r.UpdateCondition(ctx, instance, sentinelv1alpha1.AppliedConditionType, metav1.ConditionFalse, err.Error())
+			condErr := r.UpdateCondition(ctx, instance, sentinelv1alpha1.AppliedConditionType, metav1.ConditionFalse, "MutateDeployment", err.Error())
 			if condErr != nil {
 				return errors.Wrapf(err, "failed updating deployment")
 			}
@@ -130,17 +125,20 @@ func (r *DashboardReconciler) UpdateAppliedStatus(ctx context.Context, instance 
 				MutateService(instance, &svc)
 				return controllerutil.SetControllerReference(instance, &svc, r.Scheme)
 			})
-			logger.Info("updated service", "result", result, "service name", svc.Name, "deployment namespace", svc.Namespace)
+			if err == nil {
+				logger.Info("succeed updated service", "result", result, "service name", svc.Name, "deployment namespace", svc.Namespace)
+
+			}
 			return err
 		}); err != nil {
-			condErr := r.UpdateCondition(ctx, instance, sentinelv1alpha1.AppliedConditionType, metav1.ConditionFalse, err.Error())
+			condErr := r.UpdateCondition(ctx, instance, sentinelv1alpha1.AppliedConditionType, metav1.ConditionFalse, "MutateService", err.Error())
 			if condErr != nil {
 				return errors.Wrapf(err, "failed updating service")
 			}
 			return nil
 		}
 
-		err = r.UpdateCondition(ctx, instance, sentinelv1alpha1.AppliedConditionType, metav1.ConditionTrue)
+		err := r.UpdateCondition(ctx, instance, sentinelv1alpha1.AppliedConditionType, metav1.ConditionTrue)
 		if err != nil {
 			return errors.Wrapf(err, "failed updating conditions")
 		}

@@ -7,6 +7,6 @@ import (
 )
 
 // GetHealth todo get dashboard health
-func (c *DashboardReconciler) GetHealth(ctx context.Context, instance *sentinelv1alpha1.Dashboard) (bool, error) {
+func (r *DashboardReconciler) GetHealth(ctx context.Context, instance *sentinelv1alpha1.Dashboard) (bool, error) {
 	return true, nil
 }

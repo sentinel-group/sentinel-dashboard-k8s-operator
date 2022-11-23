@@ -15,30 +15,29 @@ func (r *DashboardReconciler) UpdateCondition(ctx context.Context, instance *sen
 	conditionType sentinelv1alpha1.DashboardConditionType, status metav1.ConditionStatus, reasons ...string) error {
 
 	var reason, message string
-
 	switch len(reasons) {
 	case 0:
 	case 1:
 		reason = reasons[0]
 	case 2:
-		reason = reasons[1]
-		message = reasons[2]
+		reason = reasons[0]
+		message = reasons[1]
 	default:
 		return errors.Errorf("expecting reason and message, but got %d params", len(reasons))
 	}
 
 	now := metav1.Now()
-
 	for i, cond := range instance.Status.Conditions {
 		if cond.Type == string(conditionType) {
+			if cond.ObservedGeneration != instance.Generation {
+				cond.ObservedGeneration = instance.Generation
+			}
 			if cond.LastTransitionTime.IsZero() || cond.Status != status {
 				now.DeepCopyInto(&cond.LastTransitionTime)
 			}
-
 			cond.Status = status
 			cond.Reason = reason
 			cond.Message = message
-
 			instance.Status.Conditions[i] = cond
 			return nil
 		}
@@ -52,7 +51,6 @@ func (r *DashboardReconciler) UpdateCondition(ctx context.Context, instance *sen
 		Reason:             reason,
 		Message:            message,
 	}
-
 	instance.Status.Conditions = append(instance.Status.Conditions, cond)
 
 	return nil
@@ -77,7 +75,9 @@ func (r *DashboardReconciler) UpdateStatus(ctx context.Context, instance *sentin
 	logger := log.FromContext(ctx)
 	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		errStatus := r.Status().Update(ctx, instance)
-		logger.Info("updated dashboard status")
+		if errStatus == nil {
+			logger.Info("succeed updated dashboard status")
+		}
 		return errStatus
 	}); err != nil {
 		logger.Error(err, "failed updated dashboard status")
