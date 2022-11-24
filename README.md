@@ -1,56 +1,71 @@
 # sentinel-dashboard-k8s-operator
-// TODO(user): Add simple overview of use/purpose
+
+sentinel dashboard 支持 kubernetes 原生部署。
 
 ## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+
+我们希望提交给kubernetes一份 Dashboard 资源，kubernetes 帮我们自动生成相应的deployment和service, 生产级场景，可能还要生成ingress，pv，pvc等，而不用再手动去写相应的kubernetes原生多个资源。Dashboard CRD 格式当前设计运行后如下：
+
+```yaml
+apiVersion: sentinel.sentinelguard.io/v1alpha1
+kind: Dashboard
+metadata:
+  annotations:
+  creationTimestamp: "2022-11-23T03:56:00Z"
+  generation: 6
+  name: sentinel-dashboard
+  namespace: sentinel-group
+  resourceVersion: "148637400"
+  uid: ec117635-dbd0-4953-81fe-e95f7a4c93d8
+spec:
+  env:
+  - name: NACOS_ADDRESS
+    value: nacos.nacos-group:8848
+  image: sentinel-group/sentinel-dashboard:v0.1.0
+  ports:
+  - port: 8080
+    protocol: TCP
+  replicas: 1
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 1
+      memory: 2Gi
+  type: NodePort
+status:
+  conditions:
+  - lastTransitionTime: "2022-11-23T10:14:06Z"
+    message: ""
+    observedGeneration: 6
+    reason: ""
+    status: "True"
+    type: Ready
+  - lastTransitionTime: "2022-11-24T08:37:32Z"
+    message: 'Deployment.apps "sentinel-dashboard" is invalid: spec.template.spec.containers[0].resources.requests:
+      Invalid value: "2Gi": must be less than or equal to memory limit'
+    observedGeneration: 6
+    reason: MutateDeployment
+    status: "False"
+    type: Applied
+```
+
+
+
+## How it works
+
+This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
+
+It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/)  which provides a reconcile function responsible for synchronizing resources untile the desired state is reached on the cluster.
 
 ## Getting Started
+
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
 **Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
 
-### Running on the cluster
-1. Install Instances of Custom Resources:
+### Running on the local
 
-```sh
-kubectl apply -f config/samples/
-```
-
-2. Build and push your image to the location specified by `IMG`:
-	
-```sh
-make docker-build docker-push IMG=<some-registry>/sentinel-dashboard-k8s-operator:tag
-```
-	
-3. Deploy the controller to the cluster with the image specified by `IMG`:
-
-```sh
-make deploy IMG=<some-registry>/sentinel-dashboard-k8s-operator:tag
-```
-
-### Uninstall CRDs
-To delete the CRDs from the cluster:
-
-```sh
-make uninstall
-```
-
-### Undeploy controller
-UnDeploy the controller to the cluster:
-
-```sh
-make undeploy
-```
-
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
-
-### How it works
-This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
-
-It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/) 
-which provides a reconcile function responsible for synchronizing resources untile the desired state is reached on the cluster 
-
-### Test It Out
 1. Install the CRDs into the cluster:
 
 ```sh
@@ -65,7 +80,28 @@ make run
 
 **NOTE:** You can also run this in one step by running: `make install run`
 
+### Running on the cluster
+
+1. Install Instances of Custom Resources:
+
+```sh
+kubectl apply -f config/samples/
+```
+
+2. Build and push your image to the location specified by `IMG`:
+
+```sh
+make docker-build docker-push IMG=<some-registry>/sentinel-dashboard-k8s-operator:tag
+```
+
+3. Deploy the controller to the cluster with the image specified by `IMG`:
+
+```sh
+make deploy IMG=<some-registry>/sentinel-dashboard-k8s-operator:tag
+```
+
 ### Modifying the API definitions
+
 If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
 
 ```sh
@@ -74,7 +110,21 @@ make manifests
 
 **NOTE:** Run `make --help` for more information on all potential `make` targets
 
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+### Uninstall CRDs
+
+To delete the CRDs from the cluster:
+
+```sh
+make uninstall
+```
+
+### Undeploy controller
+
+UnDeploy the controller to the cluster:
+
+```sh
+make undeploy
+```
 
 ## License
 
@@ -91,4 +141,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
