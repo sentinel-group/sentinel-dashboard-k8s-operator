@@ -3,6 +3,7 @@
 sentinel dashboard 支持 kubernetes 原生部署。
 
 ## Description
+![img.png](img.png)
 
 我们希望提交给kubernetes一份 Dashboard 资源，kubernetes 帮我们自动生成相应的deployment和service, 生产级场景，可能还要生成ingress，pv，pvc等，而不用再手动去写相应的kubernetes原生多个资源。Dashboard CRD 格式当前设计运行后如下：
 
