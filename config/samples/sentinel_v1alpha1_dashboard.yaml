@@ -1,0 +1,21 @@
+apiVersion: sentinel.sentinelguard.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: sentinel-dashboard
+  namespace: sentinel-group
+spec:
+  replicas: 1
+  image: "sentinel-group/sentinel-dashboard:v0.1.0"
+  type: "NodePort"
+  ports:
+    - port: 8080
+  env:
+    - name: "NACOS_ADDRESS"
+      value: "nacos.nacos-group:8848"
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 1
+      memory: 1Gi
