@@ -1,11 +1,14 @@
-# sentinel-dashboard-k8s-operator
+# Kubernetes operator for Sentinel dashboard
 
-sentinel dashboard 支持 kubernetes 原生部署。
+[![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
+
+Sentinel Dashboard 支持通过 kubernetes CRD 的方式原生部署。
 
 ## Description
+
 ![img.png](img.png)
 
-我们希望提交给kubernetes一份 Dashboard 资源，kubernetes 帮我们自动生成相应的deployment和service, 生产级场景，可能还要生成ingress，pv，pvc等，而不用再手动去写相应的kubernetes原生多个资源。Dashboard CRD 格式当前设计运行后如下：
+我们希望提交给 kubernetes 一份 Dashboard 资源，kubernetes 帮我们自动生成相应的deployment和service, 生产级场景，可能还要生成ingress，pv，pvc等，而不用再手动去写相应的kubernetes原生多个资源。Dashboard CRD 格式当前设计运行后如下：
 
 ```yaml
 apiVersion: sentinel.sentinelguard.io/v1alpha1
@@ -126,19 +129,3 @@ UnDeploy the controller to the cluster:
 ```sh
 make undeploy
 ```
-
-## License
-
-Copyright 2022.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
