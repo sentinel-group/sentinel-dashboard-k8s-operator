@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	sentinelv1alpha1 "github.com/sentinel-group/sentinel-dashboard-k8s-operator/api/v1alpha1"
+	"github.com/sentinel-group/sentinel-dashboard-k8s-operator/pkg/event"
 )
 
 // DashboardReconciler reconciles a Dashboard object
@@ -41,6 +43,7 @@ type DashboardReconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
 	RestConfig *rest.Config
+	Recorder   record.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=sentinel.sentinelguard.io,resources=dashboards,verbs=get;list;watch;create;update;patch;delete
@@ -92,6 +95,9 @@ func (r *DashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 	logger.Info("end reconcile")
+
+	r.Recorder.Eventf(&instance, corev1.EventTypeNormal,
+		string(event.DashboardSuccessed), "Dashboard %s successed running", instance.Namespace+"/"+instance.Name)
 	return ctrl.Result{}, nil
 }
 
@@ -116,6 +122,8 @@ func (r *DashboardReconciler) UpdateAppliedStatus(ctx context.Context, instance 
 			if condErr != nil {
 				return errors.Wrapf(err, "failed updating deployment")
 			}
+			r.Recorder.Eventf(instance, corev1.EventTypeWarning,
+				string(event.DashboardApplied), "Deployment %s applied failed", deploy.Namespace+"/"+deploy.Name)
 			return nil
 		}
 
@@ -137,6 +145,8 @@ func (r *DashboardReconciler) UpdateAppliedStatus(ctx context.Context, instance 
 			if condErr != nil {
 				return errors.Wrapf(err, "failed updating service")
 			}
+			r.Recorder.Eventf(instance, corev1.EventTypeWarning,
+				string(event.DashboardApplied), "Service %s applied failed", svc.Namespace+"/"+svc.Name)
 			return nil
 		}
 
@@ -144,6 +154,9 @@ func (r *DashboardReconciler) UpdateAppliedStatus(ctx context.Context, instance 
 		if err != nil {
 			return errors.Wrapf(err, "failed updating conditions")
 		}
+
+		r.Recorder.Eventf(instance, corev1.EventTypeNormal,
+			string(event.DashboardApplied), "Dashboard %s is applied", instance.Namespace+"/"+instance.Name)
 	}
 
 	return nil
@@ -156,6 +169,8 @@ func (r *DashboardReconciler) UpdateReadyStatus(ctx context.Context, instance *s
 			return errors.Wrapf(err, "failed updating conditions")
 		}
 		logger.Info("maybe not ready, trying again later")
+		r.Recorder.Eventf(instance, corev1.EventTypeWarning,
+			string(event.DashboardReady), "Dashboard %s health check failed", instance.Namespace+"/"+instance.Name)
 		return errors.Wrapf(err, "not health")
 	}
 
@@ -163,12 +178,16 @@ func (r *DashboardReconciler) UpdateReadyStatus(ctx context.Context, instance *s
 		return errors.Wrapf(err, "failed updating conditions")
 	}
 
+	r.Recorder.Eventf(instance, corev1.EventTypeNormal,
+		string(event.DashboardReady), "Dashboard %s is ready", instance.Namespace+"/"+instance.Name)
+
 	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *DashboardReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.RestConfig = mgr.GetConfig()
+	r.Recorder = mgr.GetEventRecorderFor("dashboard-controller")
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&sentinelv1alpha1.Dashboard{}).
